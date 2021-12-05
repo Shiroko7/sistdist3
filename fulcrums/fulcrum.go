@@ -250,7 +250,7 @@ func (s *server) RequestRebels(ctx context.Context, request *pb.RequestRebel) (*
 
 
 
-func connectNameNode() (port string) {
+func connectBroker() (port string) {
 	fmt.Println("Iniciando Fulcrum Server");
 	// Set up a connection to the server.
 	fmt.Println("Conectando a Broker... ");
