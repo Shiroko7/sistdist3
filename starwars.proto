@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+option go_package = "/starwars";
+
+/*
+protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative starwars.proto
+*/
+
+package starwars;
+
+service Broker {
+	rpc ReportFulcrum(None) returns (Reply){}
+}
+
+service Fulcrum{
+	rpc Addcity(Register) returns (Reply){}
+	rpc UpdateName(Register) returns (Reply){}
+	rpc UpdateRebels(Register) returns (Reply){}
+	rpc DeleteCity(Register) returns (Reply){}
+	rpc RequestRebels(RequestRebel) returns (Reply){}
+}
+
+message None{
+}
+
+message Reply{
+	string reply = 1;
+}
+
+message Register{
+	string PlanetName = 1;
+	string CityName = 2;
+	string RebelCount = 3;
+	string NewCityName = 4;
+}
+
+message RequestRebel{
+	string PlanetName = 1;
+	string CityName = 2;
+}
