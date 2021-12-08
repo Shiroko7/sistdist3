@@ -19,6 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BrokerClient interface {
 	ReportFulcrum(ctx context.Context, in *None, opts ...grpc.CallOption) (*Reply, error)
+	GiveCommand(ctx context.Context, in *Command, opts ...grpc.CallOption) (*Reply, error)
 }
 
 type brokerClient struct {
@@ -38,11 +39,21 @@ func (c *brokerClient) ReportFulcrum(ctx context.Context, in *None, opts ...grpc
 	return out, nil
 }
 
+func (c *brokerClient) GiveCommand(ctx context.Context, in *Command, opts ...grpc.CallOption) (*Reply, error) {
+	out := new(Reply)
+	err := c.cc.Invoke(ctx, "/starwars.Broker/GiveCommand", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BrokerServer is the server API for Broker service.
 // All implementations must embed UnimplementedBrokerServer
 // for forward compatibility
 type BrokerServer interface {
 	ReportFulcrum(context.Context, *None) (*Reply, error)
+	GiveCommand(context.Context, *Command) (*Reply, error)
 	mustEmbedUnimplementedBrokerServer()
 }
 
@@ -52,6 +63,9 @@ type UnimplementedBrokerServer struct {
 
 func (UnimplementedBrokerServer) ReportFulcrum(context.Context, *None) (*Reply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReportFulcrum not implemented")
+}
+func (UnimplementedBrokerServer) GiveCommand(context.Context, *Command) (*Reply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GiveCommand not implemented")
 }
 func (UnimplementedBrokerServer) mustEmbedUnimplementedBrokerServer() {}
 
@@ -84,6 +98,24 @@ func _Broker_ReportFulcrum_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Broker_GiveCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Command)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BrokerServer).GiveCommand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/starwars.Broker/GiveCommand",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BrokerServer).GiveCommand(ctx, req.(*Command))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Broker_ServiceDesc is the grpc.ServiceDesc for Broker service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -95,6 +127,10 @@ var Broker_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "ReportFulcrum",
 			Handler:    _Broker_ReportFulcrum_Handler,
 		},
+		{
+			MethodName: "GiveCommand",
+			Handler:    _Broker_GiveCommand_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "starwars.proto",
@@ -104,9 +140,9 @@ var Broker_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FulcrumClient interface {
-	Addcity(ctx context.Context, in *Register, opts ...grpc.CallOption) (*Reply, error)
+	AddCity(ctx context.Context, in *Register, opts ...grpc.CallOption) (*Reply, error)
 	UpdateName(ctx context.Context, in *Register, opts ...grpc.CallOption) (*Reply, error)
-	UpdateRebels(ctx context.Context, in *Register, opts ...grpc.CallOption) (*Reply, error)
+	UpdateNumber(ctx context.Context, in *Register, opts ...grpc.CallOption) (*Reply, error)
 	DeleteCity(ctx context.Context, in *Register, opts ...grpc.CallOption) (*Reply, error)
 	RequestRebels(ctx context.Context, in *RequestRebel, opts ...grpc.CallOption) (*Reply, error)
 }
@@ -119,9 +155,9 @@ func NewFulcrumClient(cc grpc.ClientConnInterface) FulcrumClient {
 	return &fulcrumClient{cc}
 }
 
-func (c *fulcrumClient) Addcity(ctx context.Context, in *Register, opts ...grpc.CallOption) (*Reply, error) {
+func (c *fulcrumClient) AddCity(ctx context.Context, in *Register, opts ...grpc.CallOption) (*Reply, error) {
 	out := new(Reply)
-	err := c.cc.Invoke(ctx, "/starwars.Fulcrum/Addcity", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/starwars.Fulcrum/AddCity", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -137,9 +173,9 @@ func (c *fulcrumClient) UpdateName(ctx context.Context, in *Register, opts ...gr
 	return out, nil
 }
 
-func (c *fulcrumClient) UpdateRebels(ctx context.Context, in *Register, opts ...grpc.CallOption) (*Reply, error) {
+func (c *fulcrumClient) UpdateNumber(ctx context.Context, in *Register, opts ...grpc.CallOption) (*Reply, error) {
 	out := new(Reply)
-	err := c.cc.Invoke(ctx, "/starwars.Fulcrum/UpdateRebels", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/starwars.Fulcrum/UpdateNumber", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -168,9 +204,9 @@ func (c *fulcrumClient) RequestRebels(ctx context.Context, in *RequestRebel, opt
 // All implementations must embed UnimplementedFulcrumServer
 // for forward compatibility
 type FulcrumServer interface {
-	Addcity(context.Context, *Register) (*Reply, error)
+	AddCity(context.Context, *Register) (*Reply, error)
 	UpdateName(context.Context, *Register) (*Reply, error)
-	UpdateRebels(context.Context, *Register) (*Reply, error)
+	UpdateNumber(context.Context, *Register) (*Reply, error)
 	DeleteCity(context.Context, *Register) (*Reply, error)
 	RequestRebels(context.Context, *RequestRebel) (*Reply, error)
 	mustEmbedUnimplementedFulcrumServer()
@@ -180,14 +216,14 @@ type FulcrumServer interface {
 type UnimplementedFulcrumServer struct {
 }
 
-func (UnimplementedFulcrumServer) Addcity(context.Context, *Register) (*Reply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Addcity not implemented")
+func (UnimplementedFulcrumServer) AddCity(context.Context, *Register) (*Reply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddCity not implemented")
 }
 func (UnimplementedFulcrumServer) UpdateName(context.Context, *Register) (*Reply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateName not implemented")
 }
-func (UnimplementedFulcrumServer) UpdateRebels(context.Context, *Register) (*Reply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateRebels not implemented")
+func (UnimplementedFulcrumServer) UpdateNumber(context.Context, *Register) (*Reply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateNumber not implemented")
 }
 func (UnimplementedFulcrumServer) DeleteCity(context.Context, *Register) (*Reply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteCity not implemented")
@@ -208,20 +244,20 @@ func RegisterFulcrumServer(s grpc.ServiceRegistrar, srv FulcrumServer) {
 	s.RegisterService(&Fulcrum_ServiceDesc, srv)
 }
 
-func _Fulcrum_Addcity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Fulcrum_AddCity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Register)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FulcrumServer).Addcity(ctx, in)
+		return srv.(FulcrumServer).AddCity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/starwars.Fulcrum/Addcity",
+		FullMethod: "/starwars.Fulcrum/AddCity",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FulcrumServer).Addcity(ctx, req.(*Register))
+		return srv.(FulcrumServer).AddCity(ctx, req.(*Register))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -244,20 +280,20 @@ func _Fulcrum_UpdateName_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Fulcrum_UpdateRebels_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Fulcrum_UpdateNumber_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Register)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FulcrumServer).UpdateRebels(ctx, in)
+		return srv.(FulcrumServer).UpdateNumber(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/starwars.Fulcrum/UpdateRebels",
+		FullMethod: "/starwars.Fulcrum/UpdateNumber",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FulcrumServer).UpdateRebels(ctx, req.(*Register))
+		return srv.(FulcrumServer).UpdateNumber(ctx, req.(*Register))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -306,16 +342,16 @@ var Fulcrum_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*FulcrumServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Addcity",
-			Handler:    _Fulcrum_Addcity_Handler,
+			MethodName: "AddCity",
+			Handler:    _Fulcrum_AddCity_Handler,
 		},
 		{
 			MethodName: "UpdateName",
 			Handler:    _Fulcrum_UpdateName_Handler,
 		},
 		{
-			MethodName: "UpdateRebels",
-			Handler:    _Fulcrum_UpdateRebels_Handler,
+			MethodName: "UpdateNumber",
+			Handler:    _Fulcrum_UpdateNumber_Handler,
 		},
 		{
 			MethodName: "DeleteCity",

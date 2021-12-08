@@ -10,12 +10,13 @@ package starwars;
 
 service Broker {
 	rpc ReportFulcrum(None) returns (Reply){}
+	rpc GiveCommand (Command) returns (Reply) {}
 }
 
 service Fulcrum{
-	rpc Addcity(Register) returns (Reply){}
+	rpc AddCity(Register) returns (Reply){}
 	rpc UpdateName(Register) returns (Reply){}
-	rpc UpdateRebels(Register) returns (Reply){}
+	rpc UpdateNumber(Register) returns (Reply){}
 	rpc DeleteCity(Register) returns (Reply){}
 	rpc RequestRebels(RequestRebel) returns (Reply){}
 }
@@ -37,4 +38,11 @@ message Register{
 message RequestRebel{
 	string PlanetName = 1;
 	string CityName = 2;
+}
+
+message Command{
+	string command = 1;
+	string planet = 2;
+	string city = 3;
+	string newValue = 4;
 }
