@@ -60,56 +60,68 @@ func registerOnLog(play string, replica_id string){
 
 
 func (s *server) AddCity(ctx context.Context, register *pb.Register) (*pb.Reply, error){
-	fmt.Print("Agregando ciudad... ")
+	fmt.Println("[AddCity] Agregando ciudad... ")
 	f, err := os.OpenFile(register.PlanetName + ".txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
-		fmt.Printf("No se pudo abrir archivo del planeta: %v\n", err)
+		fmt.Printf("[AddCity] No se pudo abrir archivo del planeta: %v\n", err)
 	} 
 
 	f.WriteString(register.PlanetName + " " + register.CityName + " " + register.RebelCount + "\n")
 	if err != nil {
-		fmt.Printf("No se pudo guardar archivo de texto: %v\n", err)
+		fmt.Printf("[AddCity] No se pudo guardar archivo de texto: %v\n", err)
 	} 
 
 	err = f.Close()
 	if err != nil {
-		fmt.Printf("No se pudo cerrar archivo de texto: %v\n", err)
+		fmt.Printf("[AddCity] No se pudo cerrar archivo de texto: %v\n", err)
 	} else {
-		fmt.Println("Registro registrado correctamente.")
+		fmt.Println("[AddCity] Registro registrado correctamente.")
 	}
 	registerOnLog("AddCity " + register.PlanetName + " " + register.CityName + " " + register.RebelCount, "asdf1")
 	updateClock(register.PlanetName)
-	return &pb.Reply{Reply: "Registro registrado"}, nil
+	clock:=file_clocks[register.PlanetName]
+	r:=strconv.Itoa(clock[0])+","+strconv.Itoa(clock[1])+","+strconv.Itoa(clock[2])
+	return &pb.Reply{Reply: "CLCK:"+r+";SERV:"+strconv.Itoa(server_id)}, nil
 }
 
 func (s *server) UpdateName(ctx context.Context, register *pb.Register) (*pb.Reply, error){
-	fmt.Print("Modificando ciudad... ")
+	fmt.Println("[UpdateName] Modificando ciudad... ")
 
 	// reading
 	f, err := os.OpenFile(register.PlanetName + ".txt", os.O_RDONLY, 0600)
 	if err != nil {
-		fmt.Printf("No se pudo abrir archivo del planeta: %v\n", err)
+		fmt.Printf("[UpdateName] No se pudo abrir archivo del planeta: %v\n", err)
 	} 
 	reader := bufio.NewReader(f)
 	lines := ""
 	line_split := []string{"", "", ""}
+	found:=false
 	for {
 		line_i, err := reader.ReadString('\n')
-		if err == io.EOF {
+		line_i=strings.Trim(line_i," \n\r")
+		if err == io.EOF{
+			if !found{
+				fmt.Printf("[UpdateName] Registro no encontrado: %v\n", err)
+			}
 			break
 		}
 		if err != nil {
-			fmt.Printf("No se pudo leer linea del planeta: %v\n", err)
+			fmt.Printf("[UpdateName] No se pudo leer linea del planeta: %v\n", err)
 		} 
 		line_split = strings.Split(line_i, " ")
-		if line_split[1] == register.CityName {
-			line_i = line_split[0] + register.NewCityName + line_split[2] + "\n"
+		if len(line_split)!=3{
+			fmt.Printf("[UpdateName] ERROR: Malformed entry ["+line_i+"]")
+			continue
 		}
-		lines = lines + line_i 
+		if line_split[1] == register.CityName {
+			found=true
+			line_i = line_split[0] +" "+ register.NewCityName +" "+ line_split[2]
+		}
+		lines = lines + line_i + "\n"
 	}
 	err = f.Close()
 	if err != nil {
-		fmt.Printf("No se pudo cerrar archivo de texto: %v\n", err)
+		fmt.Printf("[UpdateName] No se pudo cerrar archivo de texto: %v\n", err)
 	}
 	
 	// modifying
@@ -117,44 +129,56 @@ func (s *server) UpdateName(ctx context.Context, register *pb.Register) (*pb.Rep
 	f.WriteString(lines)
 	err = f.Close()
 	if err != nil {
-		fmt.Printf("No se pudo cerrar archivo de texto: %v\n", err)
+		fmt.Printf("[UpdateName] No se pudo cerrar archivo de texto: %v\n", err)
 	} else {
-		fmt.Println("Registro registrado correctamente.")
+		fmt.Println("[UpdateName] Registro registrado correctamente.")
 	}
 
 	registerOnLog("UpdateName " + register.PlanetName + " " + register.CityName + " " + register.NewCityName, "asdf1")
 	updateClock(register.PlanetName)
-	return &pb.Reply{Reply: "Registro registrado"}, nil
+	clock:=file_clocks[register.PlanetName]
+	r:=strconv.Itoa(clock[0])+","+strconv.Itoa(clock[1])+","+strconv.Itoa(clock[2])
+	return &pb.Reply{Reply: "CLCK:"+r+";SERV:"+strconv.Itoa(server_id)}, nil
 }
 
 func (s *server) UpdateNumber(ctx context.Context, register *pb.Register) (*pb.Reply, error){
-	fmt.Print("Modificando ciudad... ")
+	fmt.Println("[UpdateNumber] Modificando ciudad... ")
 
 	// reading
 	f, err := os.OpenFile(register.PlanetName + ".txt", os.O_RDONLY, 0600)
 	if err != nil {
-		fmt.Printf("No se pudo abrir archivo del planeta: %v\n", err)
+		fmt.Printf("[UpdateNumber] No se pudo abrir archivo del planeta: %v\n", err)
 	} 
 	reader := bufio.NewReader(f)
 	lines := ""
 	line_split := []string{"", "", ""}
+	found:=false
 	for {
 		line_i, err := reader.ReadString('\n')
-		if err == io.EOF {
+		line_i=strings.Trim(line_i," \n\r")
+		if err == io.EOF{
+			if !found{
+				fmt.Printf("[UpdateNumber] Registro no encontrado: %v\n", err)
+			}
 			break
 		}
 		if err != nil {
-			fmt.Printf("No se pudo leer linea del planeta: %v\n", err)
+			fmt.Printf("[UpdateNumber] No se pudo leer linea del planeta: %v\n", err)
 		} 
 		line_split = strings.Split(line_i, " ")
-		if line_split[1] == register.CityName {
-			line_i = line_split[0] + line_split[1] + register.RebelCount + "\n"
+		if len(line_split)!=3{
+			fmt.Printf("[UpdateNumber] ERROR: Malformed entry ["+line_i+"]")
+			continue
 		}
-		lines = lines + line_i 
+		if line_split[1] == register.CityName {
+			found=true
+			line_i = line_split[0] +" "+ line_split[1] +" "+ register.RebelCount
+		}
+		lines = lines + line_i + "\n"
 	}
 	err = f.Close()
 	if err != nil {
-		fmt.Printf("No se pudo cerrar archivo de texto: %v\n", err)
+		fmt.Printf("[UpdateNumber] No se pudo cerrar archivo de texto: %v\n", err)
 	}
 	
 	// modifying
@@ -162,43 +186,56 @@ func (s *server) UpdateNumber(ctx context.Context, register *pb.Register) (*pb.R
 	f.WriteString(lines)
 	err = f.Close()
 	if err != nil {
-		fmt.Printf("No se pudo cerrar archivo de texto: %v\n", err)
+		fmt.Printf("[UpdateNumber] No se pudo cerrar archivo de texto: %v\n", err)
 	} else {
-		fmt.Println("Registro registrado correctamente.")
+		fmt.Println("[UpdateNumber] Registro registrado correctamente.")
 	}
 
-	registerOnLog("UpdateRebels " + register.PlanetName + " " + register.CityName + " " + register.RebelCount, "asdf1")
+	registerOnLog("UpdateNumber " + register.PlanetName + " " + register.CityName + " " + register.RebelCount, "asdf1")
 	updateClock(register.PlanetName)
-	return &pb.Reply{Reply: "Registro registrado"}, nil
+	clock:=file_clocks[register.PlanetName]
+	r:=strconv.Itoa(clock[0])+","+strconv.Itoa(clock[1])+","+strconv.Itoa(clock[2])
+	return &pb.Reply{Reply: "CLCK:"+r+";SERV:"+strconv.Itoa(server_id)}, nil
 }
 
 func (s *server) DeleteCity(ctx context.Context, register *pb.Register) (*pb.Reply, error){
-	fmt.Print("Modificando ciudad... ")
+	fmt.Println("[DeleteCity] Modificando ciudad... ")
 
 	// reading
 	f, err := os.OpenFile(register.PlanetName + ".txt", os.O_RDONLY, 0600)
 	if err != nil {
-		fmt.Printf("No se pudo abrir archivo del planeta: %v\n", err)
+		fmt.Printf("[DeleteCity] No se pudo abrir archivo del planeta: %v\n", err)
 	} 
 	reader := bufio.NewReader(f)
 	lines := ""
 	line_split := []string{"", "", ""}
+	found:=false
 	for {
 		line_i, err := reader.ReadString('\n')
-		if err == io.EOF {
+		line_i=strings.Trim(line_i," \n\r")
+		if err == io.EOF{
+			if !found{
+				fmt.Printf("[DeleteCity] Registro no encontrado: %v\n", err)
+			}
 			break
 		}
 		if err != nil {
-			fmt.Printf("No se pudo leer linea del planeta: %v\n", err)
+			fmt.Printf("[DeleteCity] No se pudo leer linea del planeta: %v\n", err)
 		} 
 		line_split = strings.Split(line_i, " ")
+		if len(line_split)!=3{
+			fmt.Printf("[DeleteCity] ERROR: Malformed entry ["+line_i+"]")
+			continue
+		}
 		if line_split[1] != register.CityName {
-			lines = lines + line_i 
+			lines = lines + line_i + "\n"
+		} else {
+			found=true
 		}
 	}
 	err = f.Close()
 	if err != nil {
-		fmt.Printf("No se pudo cerrar archivo de texto: %v\n", err)
+		fmt.Printf("[DeleteCity] No se pudo cerrar archivo de texto: %v\n", err)
 	}
 	
 	// modifying
@@ -206,47 +243,62 @@ func (s *server) DeleteCity(ctx context.Context, register *pb.Register) (*pb.Rep
 	f.WriteString(lines)
 	err = f.Close()
 	if err != nil {
-		fmt.Printf("No se pudo cerrar archivo de texto: %v\n", err)
+		fmt.Printf("[DeleteCity] No se pudo cerrar archivo de texto: %v\n", err)
 	} else {
-		fmt.Println("Registro registrado correctamente.")
+		fmt.Println("[DeleteCity] Registro registrado correctamente.")
 	}
 
 	registerOnLog("DeleteCity " + register.PlanetName + " " + register.CityName, "asdf1")
 	updateClock(register.PlanetName)
-	return &pb.Reply{Reply: "Registro registrado"}, nil
+	clock:=file_clocks[register.PlanetName]
+	r:=strconv.Itoa(clock[0])+","+strconv.Itoa(clock[1])+","+strconv.Itoa(clock[2])
+	return &pb.Reply{Reply: "CLCK:"+r+";SERV:"+strconv.Itoa(server_id)}, nil
 }
 
 func (s *server) RequestRebels(ctx context.Context, request *pb.RequestRebel) (*pb.Reply, error){
-	fmt.Println("Buscando rebels de: " + request.CityName)
+	fmt.Println("[RequestRebels] Buscando rebels de: " + request.CityName)
 	f, err := os.OpenFile(request.PlanetName + ".txt", os.O_RDONLY, 0600)
 	if err != nil {
-		fmt.Printf("No se pudo abrir archivo del planeta: %v\n", err)
+		fmt.Printf("[RequestRebels] No se pudo abrir archivo del planeta: %v\n", err)
 	} 
 	reader := bufio.NewReader(f)
-	line := ""
+	value := "-1"
 	line_split := []string{"", "", ""}
+	found:=false
 	for {
 		line_i, err := reader.ReadString('\n')
-		if err == io.EOF {
+		line_i=strings.Trim(line_i," \n\r")
+		if err == io.EOF{
+			if !found{
+				fmt.Printf("[RequestRebels] Registro no encontrado: %v\n", err)
+			}
 			break
 		}
 		if err != nil {
-			fmt.Printf("No se pudo leer linea del pozo: %v\n", err)
+			fmt.Printf("[RequestRebels] No se pudo leer linea del log: %v\n", err)
 		} 
 		line_split = strings.Split(line_i, " ")
+		if len(line_split)!=3{
+			fmt.Printf("[RequestRebels] ERROR: Malformed entry ["+line_i+"]")
+			continue
+		}
 		if line_split[1] == request.CityName {
-			line = line_split[1]
+			found=true
+			fmt.Println("[RequestRebels] Entry found in planet file: ["+line_i+"]")
+			value = line_split[2]
 			break
 		}
 	}
 	err = f.Close()
 	if err != nil {
-		fmt.Printf("No se pudo cerrar archivo de texto: %v\n", err)
-	} else {
-		fmt.Println("Jugada registrada correctamente.")
+		fmt.Printf("[RequestRebels] No se pudo cerrar archivo de texto: %v\n", err)
+	//} else {
+	//	fmt.Println("Jugada registrada correctamente.")
 	}
-
-	return &pb.Reply{Reply: line}, nil
+	updateClock(request.PlanetName)
+	clock:=file_clocks[request.PlanetName]
+	r:=strconv.Itoa(clock[0])+","+strconv.Itoa(clock[1])+","+strconv.Itoa(clock[2])
+	return &pb.Reply{Reply: "CLCK:"+r+";SERV:"+strconv.Itoa(server_id)+";RVAL:"+value}, nil
 }
 
 //Se conecta a Broker y se reporta este servidor Fulcrum

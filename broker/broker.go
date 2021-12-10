@@ -97,20 +97,30 @@ func (s *server) GiveCommand(ctx context.Context, in *pb.Command) (*pb.Reply, er
 	return &pb.Reply{Reply: "ADDR:"+rPort}, nil
 }
 
-func main(){
-	fmt.Println("Iniciando Broker");
-	rand.Seed(time.Now().UnixNano())
-	// Set up a connection to the Pool server.
-/*	fmt.Print("Conectando a Pool... ");
-	conn, err := grpc.Dial(poolAddress, grpc.WithInsecure(), grpc.WithBlock())
+//REQUESTREBELS
+func (s *server) RequestRebels(ctx context.Context, in *pb.RequestRebel) (*pb.Reply, error){
+	// Set up a connection to a random Fulcrum.
+	rF:=fulcrums[0]//rand.Intn(2)]
+	debug("Conectando a Fulcrum aleatorio ("+rF+")... ");
+	conn, err := grpc.Dial(rF, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		fmt.Printf("[Leader.main] No se pudo realizar: %v", err)
+		fmt.Printf("[Broker.RequestRebels] No se pudo realizar: %v", err)
 	} else {
 		fmt.Println("Listo.")
 	}
 	defer conn.Close()
-	c = pb.NewPoolClient(conn)
-*/
+	ctx2, _ := context.WithTimeout(context.Background(), time.Second*300)
+	c := pb.NewFulcrumClient(conn)
+	reply, err := c.RequestRebels(ctx2, &pb.RequestRebel{PlanetName: in.GetPlanetName(), CityName: in.GetCityName()})
+	if err!=nil{
+		fmt.Printf("ERROR: "+err.Error())
+	}
+	return reply, err
+}
+
+func main(){
+	fmt.Println("Iniciando Broker");
+	rand.Seed(time.Now().UnixNano())
 	fmt.Print("Abriendo puerto "+port+"... ");
 	lis, err := net.Listen("tcp", port)
 	if err != nil {

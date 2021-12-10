@@ -19,7 +19,6 @@ const (
 
 var (
 	debugging = true	//Indica si se deben imprimir mensajes de debugging
-	state = "WAKE"		//Estado actual. Se usa para control de flujo
 )
 
 //Imprime mensajes de debugging
@@ -35,6 +34,10 @@ func debugLn(s string){
 	}
 }
 
+//Debido a que un Informant nunca lee datos desde los servidores Fulcrum, 
+//no es necesario implementar código especial para cumplir con el modelo
+//"Read your Writes".
+
 func main(){
 	fmt.Println("Iniciando Informant");
 	fmt.Println("Conectando a Broker... ");
@@ -49,7 +52,6 @@ func main(){
 
 	scanner := bufio.NewScanner(os.Stdin);
 	running:=true
-	state = "IDLE"
 	for running{
 		fmt.Print(">")
 		scanner.Scan()
@@ -61,8 +63,8 @@ func main(){
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*300)
 		switch params[0]{
 			case "HELP":
-				fmt.Println("Los siguientes comandos son reconocidos por Player:")
-				fmt.Println("EXIT                      Cierra el programa Player")
+				fmt.Println("Los siguientes comandos son reconocidos por Informant:")
+				fmt.Println("EXIT                      Cierra el programa Informant")
 				fmt.Println("HELP                      Muestra este mensaje")
 				fmt.Println("ADDCITY [P] [C] <V>       Crea una entrada para la ciudad C en el planeta P.")
 				fmt.Println("                          V indica la cantidad de rebeldes en C. Se guarda como 0 si se omite.")

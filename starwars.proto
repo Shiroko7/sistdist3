@@ -11,6 +11,7 @@ package starwars;
 service Broker {
 	rpc ReportFulcrum(None) returns (Reply){}
 	rpc GiveCommand (Command) returns (Reply) {}
+	rpc RequestRebels(RequestRebel) returns (Reply){}
 }
 
 service Fulcrum{

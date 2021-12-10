@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type BrokerClient interface {
 	ReportFulcrum(ctx context.Context, in *None, opts ...grpc.CallOption) (*Reply, error)
 	GiveCommand(ctx context.Context, in *Command, opts ...grpc.CallOption) (*Reply, error)
+	RequestRebels(ctx context.Context, in *RequestRebel, opts ...grpc.CallOption) (*Reply, error)
 }
 
 type brokerClient struct {
@@ -48,12 +49,22 @@ func (c *brokerClient) GiveCommand(ctx context.Context, in *Command, opts ...grp
 	return out, nil
 }
 
+func (c *brokerClient) RequestRebels(ctx context.Context, in *RequestRebel, opts ...grpc.CallOption) (*Reply, error) {
+	out := new(Reply)
+	err := c.cc.Invoke(ctx, "/starwars.Broker/RequestRebels", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BrokerServer is the server API for Broker service.
 // All implementations must embed UnimplementedBrokerServer
 // for forward compatibility
 type BrokerServer interface {
 	ReportFulcrum(context.Context, *None) (*Reply, error)
 	GiveCommand(context.Context, *Command) (*Reply, error)
+	RequestRebels(context.Context, *RequestRebel) (*Reply, error)
 	mustEmbedUnimplementedBrokerServer()
 }
 
@@ -66,6 +77,9 @@ func (UnimplementedBrokerServer) ReportFulcrum(context.Context, *None) (*Reply, 
 }
 func (UnimplementedBrokerServer) GiveCommand(context.Context, *Command) (*Reply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GiveCommand not implemented")
+}
+func (UnimplementedBrokerServer) RequestRebels(context.Context, *RequestRebel) (*Reply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestRebels not implemented")
 }
 func (UnimplementedBrokerServer) mustEmbedUnimplementedBrokerServer() {}
 
@@ -116,6 +130,24 @@ func _Broker_GiveCommand_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Broker_RequestRebels_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestRebel)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BrokerServer).RequestRebels(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/starwars.Broker/RequestRebels",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BrokerServer).RequestRebels(ctx, req.(*RequestRebel))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Broker_ServiceDesc is the grpc.ServiceDesc for Broker service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -130,6 +162,10 @@ var Broker_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GiveCommand",
 			Handler:    _Broker_GiveCommand_Handler,
+		},
+		{
+			MethodName: "RequestRebels",
+			Handler:    _Broker_RequestRebels_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
