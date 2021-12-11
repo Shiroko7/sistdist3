@@ -1,4 +1,4 @@
-module broker
+module querier
 
 go 1.17
 
