@@ -20,6 +20,8 @@ service Fulcrum{
 	rpc UpdateNumber(Register) returns (Reply){}
 	rpc DeleteCity(Register) returns (Reply){}
 	rpc RequestRebels(RequestRebel) returns (Reply){}
+	rpc ReportChanges(None) returns (Changes){}
+	rpc RecieveNewClock(Changes) returns (None){}
 }
 
 message None{
@@ -46,4 +48,9 @@ message Command{
 	string planet = 2;
 	string city = 3;
 	string newValue = 4;
+}
+
+message Changes{
+	string Log = 1;
+	bytes Clock = 2;
 }

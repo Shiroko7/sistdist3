@@ -181,6 +181,8 @@ type FulcrumClient interface {
 	UpdateNumber(ctx context.Context, in *Register, opts ...grpc.CallOption) (*Reply, error)
 	DeleteCity(ctx context.Context, in *Register, opts ...grpc.CallOption) (*Reply, error)
 	RequestRebels(ctx context.Context, in *RequestRebel, opts ...grpc.CallOption) (*Reply, error)
+	ReportChanges(ctx context.Context, in *None, opts ...grpc.CallOption) (*Changes, error)
+	RecieveNewClock(ctx context.Context, in *Changes, opts ...grpc.CallOption) (*None, error)
 }
 
 type fulcrumClient struct {
@@ -236,6 +238,24 @@ func (c *fulcrumClient) RequestRebels(ctx context.Context, in *RequestRebel, opt
 	return out, nil
 }
 
+func (c *fulcrumClient) ReportChanges(ctx context.Context, in *None, opts ...grpc.CallOption) (*Changes, error) {
+	out := new(Changes)
+	err := c.cc.Invoke(ctx, "/starwars.Fulcrum/ReportChanges", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fulcrumClient) RecieveNewClock(ctx context.Context, in *Changes, opts ...grpc.CallOption) (*None, error) {
+	out := new(None)
+	err := c.cc.Invoke(ctx, "/starwars.Fulcrum/RecieveNewClock", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FulcrumServer is the server API for Fulcrum service.
 // All implementations must embed UnimplementedFulcrumServer
 // for forward compatibility
@@ -245,6 +265,8 @@ type FulcrumServer interface {
 	UpdateNumber(context.Context, *Register) (*Reply, error)
 	DeleteCity(context.Context, *Register) (*Reply, error)
 	RequestRebels(context.Context, *RequestRebel) (*Reply, error)
+	ReportChanges(context.Context, *None) (*Changes, error)
+	RecieveNewClock(context.Context, *Changes) (*None, error)
 	mustEmbedUnimplementedFulcrumServer()
 }
 
@@ -266,6 +288,12 @@ func (UnimplementedFulcrumServer) DeleteCity(context.Context, *Register) (*Reply
 }
 func (UnimplementedFulcrumServer) RequestRebels(context.Context, *RequestRebel) (*Reply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RequestRebels not implemented")
+}
+func (UnimplementedFulcrumServer) ReportChanges(context.Context, *None) (*Changes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportChanges not implemented")
+}
+func (UnimplementedFulcrumServer) RecieveNewClock(context.Context, *Changes) (*None, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RecieveNewClock not implemented")
 }
 func (UnimplementedFulcrumServer) mustEmbedUnimplementedFulcrumServer() {}
 
@@ -370,6 +398,42 @@ func _Fulcrum_RequestRebels_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Fulcrum_ReportChanges_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(None)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FulcrumServer).ReportChanges(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/starwars.Fulcrum/ReportChanges",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FulcrumServer).ReportChanges(ctx, req.(*None))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fulcrum_RecieveNewClock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Changes)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FulcrumServer).RecieveNewClock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/starwars.Fulcrum/RecieveNewClock",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FulcrumServer).RecieveNewClock(ctx, req.(*Changes))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Fulcrum_ServiceDesc is the grpc.ServiceDesc for Fulcrum service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -396,6 +460,14 @@ var Fulcrum_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RequestRebels",
 			Handler:    _Fulcrum_RequestRebels_Handler,
+		},
+		{
+			MethodName: "ReportChanges",
+			Handler:    _Fulcrum_ReportChanges_Handler,
+		},
+		{
+			MethodName: "RecieveNewClock",
+			Handler:    _Fulcrum_RecieveNewClock_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
