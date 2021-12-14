@@ -9,9 +9,10 @@ protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=p
 package starwars;
 
 service Broker {
-	rpc ReportFulcrum(None) returns (Reply){}
+	rpc ReportFulcrum(FulcrumID) returns (Reply){}
 	rpc GiveCommand (Command) returns (Reply) {}
 	rpc RequestRebels(RequestRebel) returns (Reply){}
+	rpc RequestFulcrums(None) returns (Fulcrums){}
 }
 
 service Fulcrum{
@@ -20,6 +21,8 @@ service Fulcrum{
 	rpc UpdateNumber(Register) returns (Reply){}
 	rpc DeleteCity(Register) returns (Reply){}
 	rpc RequestRebels(RequestRebel) returns (Reply){}
+	rpc ReportChanges(None) returns (Changes){}
+	rpc RecieveNewClock(Changes) returns (None){}
 }
 
 message None{
@@ -27,6 +30,14 @@ message None{
 
 message Reply{
 	string reply = 1;
+}
+message FulcrumID{
+	string ID = 1;
+}
+message Fulcrums{
+	string F0 = 1;
+	string F1 = 2;
+	string F2 = 3;
 }
 
 message Register{
@@ -46,4 +57,9 @@ message Command{
 	string planet = 2;
 	string city = 3;
 	string newValue = 4;
+}
+
+message Changes{
+	string Log = 1;
+	bytes Clock = 2;
 }

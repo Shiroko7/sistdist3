@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	brokerAddress = "localhost:60051"	//Dirección y puerto de Broker
+	brokerAddress = "dist93:60051"	//Dirección y puerto de Broker
 )
 
 var (
