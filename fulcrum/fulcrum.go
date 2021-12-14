@@ -372,13 +372,33 @@ func (s *server) ReportChanges(ctx context.Context, in *pb.None) (*pb.Changes, e
 	return &pb.Changes{Log: changes_list, Clock: b_clock}, nil
 }
 
+
+func writeChanges(full_log string) {
+	full_log_list := strings.Split(full_log, "-")
+	var change_split []string
+	for _, change := range full_log_list {
+		change_split = strings.Split(change, " ")
+		if change_split[0] == "AddCity" {
+			addCityOnFile(change_split[1], change_split[2], change_split[3])
+		} else if change_split[0] == "UpdateName" {
+			updateNameOnFile(change_split[1], change_split[2], change_split[3])
+		} else if change_split[0] == "UpdateNumber" {
+			updateNumberOnFile(change_split[1], change_split[2], change_split[3])
+		} else if change_split[0] == "DeleteCity" {
+			deleteCityOnFile(change_split[1], change_split[2])
+		}
+	}
+	fmt.Println("Archivos actualizados")
+}
+
 func (s *server) RecieveNewClock(ctx context.Context, in *pb.Changes) (*pb.None, error) {
 	json.Unmarshal(in.Clock, &file_clocks)
+	writeChanges(in.Log)
 	fmt.Println("New clocks:", file_clocks)
 	return &pb.None{}, nil
 }
 
-func sendNewClocks(port string) {
+func sendNewClocks(port string, full_log string, log string) {
 	// Set up a connection to the server.
 	fmt.Println("Conectando a fulcrum " + port)
 	conn, err := grpc.Dial(port, grpc.WithInsecure(), grpc.WithBlock())
@@ -392,9 +412,12 @@ func sendNewClocks(port string) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*300)
 	b_clock, _ := json.Marshal(file_clocks)
-	c.RecieveNewClock(ctx, &pb.Changes{Log: "", Clock: b_clock})
+	c.RecieveNewClock(ctx, &pb.Changes{Log: full_log, Clock: b_clock})
 	cancel()
 	conn.Close()
+
+	// empty logs
+	os.Remove(log)
 }
 
 //Se conecta a Broker y se reporta este servidor Fulcrum
@@ -474,9 +497,11 @@ func propagateChanges() {
 		if err != nil {
 			fmt.Println("No se pudo unmarshal el reloj 1")
 		}
-
 		// replica 0 (master)
 		log_list, _ := readLog("0")
+
+		// For replicas
+		full_log_list := []string{}
 
 		var change_split []string
 		planet := ""
@@ -507,12 +532,16 @@ func propagateChanges() {
 						if change_split[1] == planet {
 							if change_split[0] == "AddCity" {
 								addCityOnFile(change_split[1], change_split[2], change_split[3])
+								full_log_list = append(full_log_list, change)
 							} else if change_split[0] == "UpdateName" {
 								updateNameOnFile(change_split[1], change_split[2], change_split[3])
+								full_log_list = append(full_log_list, change)
 							} else if change_split[0] == "UpdateNumber" {
 								updateNumberOnFile(change_split[1], change_split[2], change_split[3])
+								full_log_list = append(full_log_list, change)
 							} else if change_split[0] == "DeleteCity" {
 								deleteCityOnFile(change_split[1], change_split[2])
+								full_log_list = append(full_log_list, change)
 							}
 						}
 					}
@@ -527,12 +556,16 @@ func propagateChanges() {
 						if change_split[1] == planet {
 							if change_split[0] == "AddCity" {
 								addCityOnFile(change_split[1], change_split[2], change_split[3])
+								full_log_list = append(full_log_list, change)
 							} else if change_split[0] == "UpdateName" {
 								updateNameOnFile(change_split[1], change_split[2], change_split[3])
+								full_log_list = append(full_log_list, change)
 							} else if change_split[0] == "UpdateNumber" {
 								updateNumberOnFile(change_split[1], change_split[2], change_split[3])
+								full_log_list = append(full_log_list, change)
 							} else if change_split[0] == "DeleteCity" {
 								deleteCityOnFile(change_split[1], change_split[2])
+								full_log_list = append(full_log_list, change)
 							}
 						}
 					}
@@ -548,12 +581,16 @@ func propagateChanges() {
 						if change_split[1] == planet {
 							if change_split[0] == "AddCity" {
 								addCityOnFile(change_split[1], change_split[2], change_split[3])
+								full_log_list = append(full_log_list, change)
 							} else if change_split[0] == "UpdateName" {
 								updateNameOnFile(change_split[1], change_split[2], change_split[3])
+								full_log_list = append(full_log_list, change)
 							} else if change_split[0] == "UpdateNumber" {
 								updateNumberOnFile(change_split[1], change_split[2], change_split[3])
+								full_log_list = append(full_log_list, change)
 							} else if change_split[0] == "DeleteCity" {
 								deleteCityOnFile(change_split[1], change_split[2])
+								full_log_list = append(full_log_list, change)
 							}
 						}
 					}
@@ -566,11 +603,10 @@ func propagateChanges() {
 		}
 		// empty logs
 		os.Remove("0.txt")
-		os.Remove("1.txt")
-		os.Remove("2.txt")
 		// send new clocks
-		sendNewClocks(fulcrum_addresses[1])
-		sendNewClocks(fulcrum_addresses[2])
+		full_log := strings.Join(full_log_list, "-")
+		sendNewClocks(fulcrum_addresses[1], full_log, "1.txt")
+		sendNewClocks(fulcrum_addresses[2], full_log, "2.txt")
 	}
 }
 
